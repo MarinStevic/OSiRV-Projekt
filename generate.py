@@ -2,6 +2,26 @@ import numpy as np
 import cv2
 import os
 
+def quantisation(image, q):
+    if (q >= 0 and q <= 8):
+        for i in range(image.shape[0]):
+            for j in range(image.shape[1]):
+                d = 2**(8 - q)
+                image[i, j] = (int(image[i, j]/d) + 1/2)*d
+        print("Quantization successful")
+        return image
+    else:
+        print("Quantization unsuccessful")
+        return image
+
+# img = cv2.imread("../../../images/BoatsColor.bmp", 0).astype(np.float32)
+# for i in range(img.shape[0]):
+#     for j in range(img.shape[1]):
+#         if (img[i, j] > 255):
+#             img[i, j] = 255
+#         elif (img[i, j] < 0):
+#             img[i, j] = 0
+
 def createLitho(image, minThick, maxThick, dim, name):
     width = image.shape[1]*2
     height = image.shape[0]*2
@@ -33,6 +53,32 @@ def createLitho(image, minThick, maxThick, dim, name):
                 temp[i][j] = int((temp[i+1][j] + temp[i-1][j] + temp[i][j+1] + temp[i][j-1]) / 4)
         print(str(round(i / (height+1) * 20) + 40) + "%")
 
+    for i in range(height+1):
+        for j in range(width+1):
+            if (i == 0):
+                if (j == 0):
+                    temp[i][j] = temp[i+1][j+1]
+                elif (j == width):
+                    temp[i][j] = temp[i+1][j-1]
+                else:
+                    temp[i][j] = temp[i+1][j]
+
+            if (i == height):
+                if (j == 0):
+                    temp[i][j] = temp[i-1][j+1]
+                elif (j == width):
+                    temp[i][j] = temp[i-1][j-1]
+                else:
+                    temp[i][j] = temp[i-1][j]
+            
+            if (j == 0):
+                if (i != 0 and i != height):
+                    temp[i][j] = temp[i][j+1]
+            
+            if (j == width):
+                if (i != 0 and i != height):
+                    temp[i][j] = temp[i][j-1]
+    
     for i in range(height+1):
         for j in range(width+1):
             temp[i][j] = minThick + ((maxThick - minThick) / 256 * (256 - temp[i][j]))
@@ -127,20 +173,20 @@ def createLitho(image, minThick, maxThick, dim, name):
     print("100%\nDONE!")
     return temp
 
-imgName = input("Unesite ime slike: ")
+imgName = input("Please enter image name: ")
 img = cv2.imread("images/" + imgName, 0)
 
-minThickness = input("Unesite minimalnu debljinu (mm, default=0.6): ")
+minThickness = input("Minimal thickness (mm, default=0.6): ")
 if (minThickness == ""):
     minThickness = 0.6
-maxThickness = input("Unesite maksimalnu debljinu (mm, default=3.0): ")
+maxThickness = input("Maximal thickness (mm, default=3.0): ")
 if (maxThickness == ""):
     maxThickness = 3.0
 
 while (True):
-    x = input("Odaberite:\n  1. Odabir veličine pixela\n  2. Odabir veličine cijelog objekta\nOdabir: ")
+    x = input("Choose sizing option:\n  1. Pixel size\n  2. Object size\nChoose: ")
     if (x == "1"):
-        x = input("Unesite velicinu pixela (mm, default=0.2): ")
+        x = input("Pixel size (mm, default=0.2): ")
         if (x == ""):
             dim = 0.2
         else:
@@ -148,16 +194,16 @@ while (True):
         break
     elif (x == "2"):
         while (True):
-            x = input("Odaberite:\n  1. Odabir visine\n  2. Odabir širine\nOdabir: ")
+            x = input("Choose:\n  1. Height\n  2. Width\nChoose: ")
             if (x == "1"):
-                x = input("Unesite visinu (mm, default=200): ")
+                x = input("Enter height (mm, default=200): ")
                 if (x == ""):
                     dim = 180 / img.shape[1]
                 else:
                     dim = (int(x) - 20) / img.shape[0]
                 break
             elif (x == "2"):
-                x = input("Unesite širinu (mm, default=200): ")
+                x = input("Enter height (mm, default=200): ")
                 if (x == ""):
                     dim = 180 / img.shape[1]
                 else:
@@ -165,15 +211,25 @@ while (True):
                 break
         break
 
-print("Odabrani parametri:")
-print("Slika: " + imgName)
-print("Debljina: " + str(minThickness) + "-" + str(maxThickness) + "mm")
-print("Veličina pixela: " + str(dim) + "mm")
+# quant = int(-1)
+# while (True):
+#     quant = input("Enter quantisation parameter (0-8, default=8): ")
+#     if (str(quant) == ""):
+#         quant = 8
+#         break
+#     elif (int(quant) >= 0 and int(quant) <= 8):
+#         break
+
+print("Chosen parameters:")
+print("Image: " + imgName)
+print("Thickness: " + str(minThickness) + "-" + str(maxThickness) + "mm")
+print("Pixel size: " + str(dim) + "mm")
+# print("Quantisation: " + str(quant))
 input("Press enter to continue...")
 
-lithophane = createLitho(img, minThickness, maxThickness, dim, imgName.split(".")[0])
+# lithophane = createLitho(quantisation(img.copy(), int(quant)).astype("uint8"), minThickness, maxThickness, dim, imgName.split(".")[0])
 
-# try:
-#     lithophane = createLitho(img, minThickness, maxThickness, dim, imgName.split(".")[0])
-# except:
-#     print("Something went wrong. Please try again. Check your parameters.")
+try:
+    lithophane = createLitho(img, minThickness, maxThickness, dim, imgName.split(".")[0])
+except:
+    print("Something went wrong. Please try again. Check your parameters.")
