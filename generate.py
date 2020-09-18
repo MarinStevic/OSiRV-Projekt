@@ -174,6 +174,8 @@ def createLitho(image, minThick, maxThick, dim, name):
     return temp
 
 imgName = input("Please enter image name: ")
+while (imgName == ""):
+    imgName = input("Please enter image name: ")
 img = cv2.imread("images/" + imgName, 0)
 
 minThickness = input("Minimal thickness (mm, default=0.6): ")
