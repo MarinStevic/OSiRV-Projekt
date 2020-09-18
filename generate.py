@@ -203,7 +203,7 @@ while (True):
                     dim = (int(x) - 20) / img.shape[0]
                 break
             elif (x == "2"):
-                x = input("Enter height (mm, default=200): ")
+                x = input("Enter width (mm, default=200): ")
                 if (x == ""):
                     dim = 180 / img.shape[1]
                 else:
